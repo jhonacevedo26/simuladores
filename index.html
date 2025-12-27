@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Flujos de Capital Global</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0a3d62;
+            --secondary: #c0392b;
+            --accent: #e67e22;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #c0392b;
+            --bg-dark: #0c1821;
+            --bg-light: #f8f9fa;
+            --text-dark: #2c3e50;
+            --text-light: #ecf0f1;
+            --border: #bdc3c7;
+            --shadow: rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #0c1821 0%, #1a2332 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #95a5a6;
+            font-weight: 400;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            animation: fadeIn 1s ease-out 0.2s backwards;
+        }
+
+        .control-panel {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .control-group {
+            margin-bottom: 2rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .button-group {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1rem;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        .btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .btn.disabled:hover {
+            transform: none;
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .validation-message {
+            background: rgba(192, 57, 43, 0.2);
+            border-left: 3px solid var(--danger);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            animation: slideInLeft 0.4s ease-out;
+        }
+
+        .validation-message.valid {
+            background: rgba(39, 174, 96, 0.2);
+            border-left-color: var(--success);
+        }
+
+        .results-panel {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .scenario-header {
+            background: linear-gradient(135deg, rgba(230, 126, 34, 0.2) 0%, rgba(243, 156, 18, 0.2) 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(230, 126, 34, 0.3);
+        }
+
+        .scenario-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meta-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .horizon-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            opacity: 0.6;
+        }
+
+        .tab:hover {
+            opacity: 0.8;
+        }
+
+        .tab.active {
+            opacity: 1;
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .assets-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .asset-category {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .asset-items {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .asset-item {
+            background: rgba(255,255,255,0.03);
+            padding: 1rem;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 1rem;
+            align-items: center;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .asset-item.up {
+            border-left-color: var(--success);
+            background: rgba(39, 174, 96, 0.05);
+        }
+
+        .asset-item.down {
+            border-left-color: var(--danger);
+            background: rgba(192, 57, 43, 0.05);
+        }
+
+        .asset-item.neutral {
+            border-left-color: #95a5a6;
+            background: rgba(149, 165, 166, 0.05);
+        }
+
+        .asset-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .asset-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+        }
+
+        .arrow.up { color: var(--success); }
+        .arrow.down { color: var(--danger); }
+        .arrow.neutral { color: #95a5a6; }
+
+        .intensity {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .intensity.high {
+            background: rgba(192, 57, 43, 0.3);
+            color: #e74c3c;
+        }
+
+        .intensity.moderate {
+            background: rgba(243, 156, 18, 0.3);
+            color: #f39c12;
+        }
+
+        .intensity.low {
+            background: rgba(39, 174, 96, 0.3);
+            color: #27ae60;
+        }
+
+        .rationale {
+            grid-column: 1 / -1;
+            font-size: 0.85rem;
+            color: #95a5a6;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .historical-note {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid #3498db;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .historical-note h3 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            color: #3498db;
+        }
+
+        .historical-note ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .historical-note li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .historical-note li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #95a5a6;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-subtext {
+            font-size: 0.95rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .scenario-meta {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .horizon-tabs {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .tab {
+                border-bottom: none;
+                border-left: 3px solid transparent;
+            }
+            
+            .tab.active {
+                border-left-color: var(--accent);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Analizador de Flujos de Capital Global</h1>
+            <p class="subtitle">Modelador de impacto macroeconómico en activos financieros</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="control-panel">
+                <div class="control-group">
+                    <label class="control-label">Política Monetaria FED</label>
+                    <div class="button-group">
+                        <button class="btn" data-var="fedPolicy" data-value="aggressive-hike">📈 Sube Tasas Agresivamente</button>
+                        <button class="btn" data-var="fedPolicy" data-value="moderate-hike">↗️ Sube Tasas Moderadamente</button>
+                        <button class="btn" data-var="fedPolicy" data-value="hold">⏸️ Mantiene Tasas</button>
+                        <button class="btn" data-var="fedPolicy" data-value="moderate-cut">↘️ Baja Tasas Moderadamente</button>
+                        <button class="btn" data-var="fedPolicy" data-value="aggressive-cut">📉 Baja Tasas Agresivamente</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Nivel de Inflación</label>
+                    <div class="button-group">
+                        <button class="btn" data-var="inflation" data-value="low">🔵 Baja (&lt;2%)</button>
+                        <button class="btn" data-var="inflation" data-value="moderate">🟡 Moderada (2-4%)</button>
+                        <button class="btn" data-var="inflation" data-value="high">🔴 Alta (&gt;4%)</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Ciclo Económico</label>
+                    <div class="button-group">
+                        <button class="btn" data-var="cycle" data-value="recession">📊 Recesión</button>
+                        <button class="btn" data-var="cycle" data-value="recovery">🔄 Recuperación</button>
+                        <button class="btn" data-var="cycle" data-value="expansion">🚀 Expansión</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Crisis Geopolítica</label>
+                    <div class="button-group">
+                        <button class="btn" data-var="geopolitical" data-value="none">✅ No hay crisis</button>
+                        <button class="btn" data-var="geopolitical" data-value="moderate">⚠️ Crisis Moderada</button>
+                        <button class="btn" data-var="geopolitical" data-value="severe">🚨 Crisis Severa</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Política Fiscal</label>
+                    <div class="button-group">
+                        <button class="btn" data-var="fiscal" data-value="contractionary">📉 Contractiva</button>
+                        <button class="btn" data-var="fiscal" data-value="neutral">➖ Neutral</button>
+                        <button class="btn" data-var="fiscal" data-value="expansionary">📈 Expansiva</button>
+                    </div>
+                </div>
+
+                <div id="validation-message"></div>
+            </div>
+
+            <div class="results-panel">
+                <div id="results-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-text">Selecciona un escenario macroeconómico</div>
+                        <div class="empty-state-subtext">Elige los parámetros en el panel izquierdo para analizar los flujos de capital</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado del escenario
+        const state = {
+            fedPolicy: null,
+            inflation: null,
+            cycle: null,
+            geopolitical: null,
+            fiscal: null,
+            currentHorizon: 'short'
+        };
+
+        // Reglas de validación económica
+        const validationRules = {
+            // Expansión económica no puede coexistir con inflación alta sostenida
+            invalidCombinations: [
+                {
+                    conditions: { cycle: 'expansion', inflation: 'high' },
+                    message: '⚠️ Combinación poco probable: La expansión económica con inflación alta sostenida tiende a crear sobrecalentamiento y corrección de mercado.'
+                },
+                {
+                    conditions: { cycle: 'recession', fedPolicy: 'aggressive-hike' },
+                    message: '⚠️ Combinación atípica: Es muy inusual que la FED suba tasas agresivamente durante una recesión (excepto casos extremos como Volcker 1980).'
+                },
+                {
+                    conditions: { inflation: 'low', fedPolicy: 'aggressive-hike' },
+                    message: '⚠️ Sin lógica económica: No hay razón para subir tasas agresivamente con inflación baja.'
+                },
+                {
+                    conditions: { cycle: 'recession', inflation: 'high', fedPolicy: 'aggressive-cut' },
+                    message: '⚠️ Escenario de estanflación extremo: Recesión con inflación alta requiere cuidado (similar a años 70).'
+                }
+            ]
+        };
+
+        // Base de datos de impacto de activos
+        const assetImpacts = {
+            'aggressive-hike-high-expansion-none-neutral': {
+                scenario: 'Enfriamiento de Sobrecalentamiento',
+                probability: 'común',
+                historicalExamples: ['2022-2023: FED combate inflación post-pandemia', '2004-2006: Normalización post burbuja tecnológica'],
+                
+                short: {
+                    'Bonos USA 2Y': { direction: 'down', intensity: 'high', rationale: 'Los bonos de corto plazo caen inmediatamente con subidas de tasas, elevando yields.' },
+                    'Bonos USA 10-30Y': { direction: 'down', intensity: 'moderate', rationale: 'Presión a la baja por tasas más altas, aunque puede haber demanda si se anticipa desaceleración.' },
+                    'Bonos Corporativos IG': { direction: 'down', intensity: 'moderate', rationale: 'Spreads se amplían por mayor costo de endeudamiento.' },
+                    'Bonos High Yield': { direction: 'down', intensity: 'high', rationale: 'Mayor riesgo de default con tasas altas presiona estos bonos.' },
+                    'TES Colombia': { direction: 'down', intensity: 'moderate', rationale: 'Presión por salida de capitales hacia USA.' },
+                    
+                    'S&P 500': { direction: 'down', intensity: 'moderate', rationale: 'Valuaciones se comprimen por tasas más altas, especialmente en sectores de crecimiento.' },
+                    'Nasdaq (Tech)': { direction: 'down', intensity: 'high', rationale: 'Las acciones tecnológicas son muy sensibles a tasas por valuaciones a futuro.' },
+                    'Sector Financiero': { direction: 'up', intensity: 'low', rationale: 'Los bancos se benefician de márgenes más amplios si la curva se empieza a empinar.' },
+                    'Sector Energía': { direction: 'neutral', intensity: 'low', rationale: 'Depende más de commodities que de tasas.' },
+                    'Mercados Emergentes': { direction: 'down', intensity: 'high', rationale: 'Fuerte salida de capitales hacia activos USA de mayor rendimiento.' },
+                    'Colcap': { direction: 'down', intensity: 'moderate', rationale: 'Presión por salida de capitales y fortalecimiento del dólar.' },
+                    
+                    'Oro': { direction: 'down', intensity: 'moderate', rationale: 'El oro pierde atractivo vs activos que pagan interés.' },
+                    'Petróleo WTI': { direction: 'down', intensity: 'low', rationale: 'Preocupaciones sobre demanda futura por desaceleración económica.' },
+                    'Real Estate (REITs)': { direction: 'down', intensity: 'high', rationale: 'Los REITs son muy sensibles a tasas de interés.' },
+                    'Commodities Agrícolas': { direction: 'neutral', intensity: 'low', rationale: 'Más influenciados por clima y oferta/demanda específica.' },
+                    
+                    'DXY (Índice Dólar)': { direction: 'up', intensity: 'high', rationale: 'Fortalecimiento del dólar por diferencial de tasas.' },
+                    'USD/COP': { direction: 'up', intensity: 'high', rationale: 'El peso colombiano se debilita ante dólar fuerte.' },
+                    'JPY (Yen)': { direction: 'down', intensity: 'moderate', rationale: 'El yen pierde terreno vs dólar más fuerte.' },
+                    'CHF (Franco Suizo)': { direction: 'down', intensity: 'low', rationale: 'Menos flujo hacia refugios con economía estable.' }
+                },
+                
+                medium: {
+                    'Bonos USA 2Y': { direction: 'neutral', intensity: 'low', rationale: 'Se estabilizan en nuevos niveles si inflación muestra señales de control.' },
+                    'Bonos USA 10-30Y': { direction: 'up', intensity: 'low', rationale: 'Pueden recuperarse si mercado anticipa éxito en controlar inflación.' },
+                    'Bonos Corporativos IG': { direction: 'neutral', intensity: 'low', rationale: 'Ajuste completo, esperan señales de siguiente fase.' },
+                    'Bonos High Yield': { direction: 'down', intensity: 'moderate', rationale: 'Continúa presión si economía se desacelera más de lo anticipado.' },
+                    'TES Colombia': { direction: 'neutral', intensity: 'low', rationale: 'Ajuste completo dependiente de políticas locales.' },
+                    
+                    'S&P 500': { direction: 'neutral', intensity: 'low', rationale: 'Consolidación mientras mercado evalúa impacto en ganancias corporativas.' },
+                    'Nasdaq (Tech)': { direction: 'down', intensity: 'moderate', rationale: 'Continúa presión si tasas permanecen altas.' },
+                    'Sector Financiero': { direction: 'up', intensity: 'moderate', rationale: 'Beneficio sostenido de márgenes amplios.' },
+                    'Sector Energía': { direction: 'neutral', intensity: 'low', rationale: 'Depende de balance oferta/demanda petrolera.' },
+                    'Mercados Emergentes': { direction: 'neutral', intensity: 'low', rationale: 'Estabilización si no hay más shocks.' },
+                    'Colcap': { direction: 'neutral', intensity: 'low', rationale: 'Depende de factores locales y commodities.' },
+                    
+                    'Oro': { direction: 'neutral', intensity: 'low', rationale: 'Estabilización en rango según evolución de tasas reales.' },
+                    'Petróleo WTI': { direction: 'neutral', intensity: 'low', rationale: 'Depende de OPEC+ y demanda china.' },
+                    'Real Estate (REITs)': { direction: 'down', intensity: 'moderate', rationale: 'Continúa presión mientras tasas permanezcan elevadas.' },
+                    'Commodities Agrícolas': { direction: 'neutral', intensity: 'low', rationale: 'Factores propios de oferta/demanda dominan.' },
+                    
+                    'DXY (Índice Dólar)': { direction: 'neutral', intensity: 'low', rationale: 'Se mantiene fuerte pero sin grandes movimientos adicionales.' },
+                    'USD/COP': { direction: 'neutral', intensity: 'low', rationale: 'Depende de flujos de capitales y política local.' },
+                    'JPY (Yen)': { direction: 'neutral', intensity: 'low', rationale: 'Ajuste completado.' },
+                    'CHF (Franco Suizo)': { direction: 'neutral', intensity: 'low', rationale: 'Estable sin nuevos catalizadores.' }
+                },
+                
+                long: {
+                    'Bonos USA 2Y': { direction: 'up', intensity: 'low', rationale: 'Eventual normalización cuando FED considera bajar tasas.' },
+                    'Bonos USA 10-30Y': { direction: 'up', intensity: 'moderate', rationale: 'Recuperación si inflación controlada y expectativas de crecimiento moderado.' },
+                    'Bonos Corporativos IG': { direction: 'up', intensity: 'low', rationale: 'Mejora gradual con economía estabilizada.' },
+                    'Bonos High Yield': { direction: 'neutral', intensity: 'low', rationale: 'Depende de ciclo de crédito y defaults.' },
+                    'TES Colombia': { direction: 'up', intensity: 'low', rationale: 'Recuperación si condiciones globales mejoran.' },
+                    
+                    'S&P 500': { direction: 'up', intensity: 'moderate', rationale: 'Reanudación de tendencia alcista con nuevo ciclo de ganancias.' },
+                    'Nasdaq (Tech)': { direction: 'up', intensity: 'moderate', rationale: 'Recuperación cuando tasas empiezan a normalizarse.' },
+                    'Sector Financiero': { direction: 'up', intensity: 'moderate', rationale: 'Beneficio de márgenes y eventual recuperación de actividad.' },
+                    'Sector Energía': { direction: 'up', intensity: 'low', rationale: 'Ciclo de inversión en energía tradicional continúa.' },
+                    'Mercados Emergentes': { direction: 'up', intensity: 'moderate', rationale: 'Retorno de flujos cuando FED señala fin de alzas.' },
+                    'Colcap': { direction: 'up', intensity: 'moderate', rationale: 'Recuperación con retorno de capitales.' },
+                    
+                    'Oro': { direction: 'up', intensity: 'low', rationale: 'Recupera atractivo cuando tasas reales bajan.' },
+                    'Petróleo WTI': { direction: 'up', intensity: 'moderate', rationale: 'Demanda se recupera con crecimiento global.' },
+                    'Real Estate (REITs)': { direction: 'up', intensity: 'moderate', rationale: 'Recuperación cuando tasas normalizan.' },
+                    'Commodities Agrícolas': { direction: 'neutral', intensity: 'low', rationale: 'Tendencia secular de demanda.' },
+                    
+                    'DXY (Índice Dólar)': { direction: 'down', intensity: 'moderate', rationale: 'Se debilita cuando FED empieza a bajar tasas.' },
+                    'USD/COP': { direction: 'down', intensity: 'moderate', rationale: 'Peso se aprecia con retorno de capitales.' },
+                    'JPY (Yen)': { direction: 'up', intensity: 'low', rationale: 'Recupera algo de terreno.' },
+                    'CHF (Franco Suizo)': { direction: 'neutral', intensity: 'low', rationale: 'Estable en ambiente normalizado.' }
+                }
+            }
+        };
+
+        // Función para calcular impactos basados en escenario
+        function calculateImpacts(scenarioKey) {
+            // Si tenemos un escenario predefinido exacto, úsalo
+            if (assetImpacts[scenarioKey]) {
+                return assetImpacts[scenarioKey];
+            }
+            
+            // Si no, usa lógica de cálculo basada en componentes
+            return calculateDynamicImpacts();
+        }
+
+        function calculateDynamicImpacts() {
+            // Esta función calcula impactos cuando no hay un escenario exacto predefinido
+            const impacts = {
+                scenario: 'Escenario Personalizado',
+                probability: 'calculado',
+                historicalExamples: ['Escenario sintetizado a partir de teoría macroeconómica'],
+                short: {},
+                medium: {},
+                long: {}
+            };
+
+            // Lógica base para cada activo según variables macroeconómicas
+            const assets = [
+                'Bonos USA 2Y', 'Bonos USA 10-30Y', 'Bonos Corporativos IG', 'Bonos High Yield', 'TES Colombia',
+                'S&P 500', 'Nasdaq (Tech)', 'Sector Financiero', 'Sector Energía', 'Mercados Emergentes', 'Colcap',
+                'Oro', 'Petróleo WTI', 'Real Estate (REITs)', 'Commodities Agrícolas',
+                'DXY (Índice Dólar)', 'USD/COP', 'JPY (Yen)', 'CHF (Franco Suizo)'
+            ];
+
+            assets.forEach(asset => {
+                ['short', 'medium', 'long'].forEach(horizon => {
+                    impacts[horizon][asset] = calculateAssetImpact(asset, horizon);
+                });
+            });
+
+            return impacts;
+        }
+
+        function calculateAssetImpact(asset, horizon) {
+            const { fedPolicy, inflation, cycle, geopolitical, fiscal } = state;
+            let direction = 'neutral';
+            let intensity = 'low';
+            let rationale = '';
+
+            // Lógica específica por tipo de activo
+            if (asset.includes('Bonos USA')) {
+                if (fedPolicy && fedPolicy.includes('hike')) {
+                    direction = 'down';
+                    intensity = fedPolicy === 'aggressive-hike' ? 'high' : 'moderate';
+                    rationale = 'Tasas más altas reducen precio de bonos existentes.';
+                } else if (fedPolicy && fedPolicy.includes('cut')) {
+                    direction = 'up';
+                    intensity = 'moderate';
+                    rationale = 'Tasas más bajas impulsan precio de bonos.';
+                }
+            } else if (asset === 'Oro') {
+                if (inflation === 'high') {
+                    direction = 'up';
+                    intensity = 'moderate';
+                    rationale = 'Oro como cobertura contra inflación.';
+                }
+                if (geopolitical === 'severe') {
+                    direction = 'up';
+                    intensity = 'high';
+                    rationale = 'Oro como activo refugio en crisis.';
+                }
+                if (fedPolicy && fedPolicy.includes('hike')) {
+                    if (direction === 'neutral') direction = 'down';
+                    rationale += ' Pero presión por costo de oportunidad vs activos con rendimiento.';
+                }
+            } else if (asset === 'DXY (Índice Dólar)') {
+                if (fedPolicy && fedPolicy.includes('hike')) {
+                    direction = 'up';
+                    intensity = 'high';
+                    rationale = 'Dólar se fortalece por diferencial de tasas.';
+                }
+                if (geopolitical === 'severe') {
+                    direction = 'up';
+                    intensity = 'high';
+                    rationale = 'Flight to safety hacia dólar.';
+                }
+                if (fedPolicy && fedPolicy.includes('cut')) {
+                    direction = 'down';
+                    intensity = 'moderate';
+                    rationale = 'Dólar se debilita con tasas más bajas.';
+                }
+            } else if (asset.includes('S&P 500') || asset.includes('Nasdaq')) {
+                if (cycle === 'recession') {
+                    direction = 'down';
+                    intensity = 'high';
+                    rationale = 'Recesión presiona ganancias corporativas.';
+                } else if (cycle === 'expansion') {
+                    direction = 'up';
+                    intensity = 'moderate';
+                    rationale = 'Expansión económica impulsa acciones.';
+                }
+                if (fedPolicy && fedPolicy.includes('aggressive-hike')) {
+                    direction = 'down';
+                    intensity = asset.includes('Nasdaq') ? 'high' : 'moderate';
+                    rationale = 'Tasas altas comprimen valuaciones.';
+                }
+            } else if (asset === 'Mercados Emergentes' || asset === 'Colcap') {
+                if (fedPolicy && fedPolicy.includes('hike')) {
+                    direction = 'down';
+                    intensity = 'high';
+                    rationale = 'Salida de capitales hacia USA.';
+                }
+                if (fedPolicy && fedPolicy.includes('cut')) {
+                    direction = 'up';
+                    intensity = 'moderate';
+                    rationale = 'Retorno de flujos hacia EM.';
+                }
+            }
+
+            // Ajustes por horizonte temporal
+            if (horizon === 'medium') {
+                if (intensity === 'high') intensity = 'moderate';
+                if (direction !== 'neutral') rationale = 'Impacto se modera con ajuste del mercado.';
+            } else if (horizon === 'long') {
+                if (direction === 'down' && cycle === 'recovery') {
+                    direction = 'neutral';
+                    rationale = 'Recuperación eventualmente contrarresta presión inicial.';
+                }
+            }
+
+            return { direction, intensity, rationale };
+        }
+
+        // Validación de escenario
+        function validateScenario() {
+            const { fedPolicy, inflation, cycle, geopolitical, fiscal } = state;
+            
+            if (!fedPolicy || !inflation || !cycle || !geopolitical || !fiscal) {
+                return { valid: true, message: '' };
+            }
+
+            for (const rule of validationRules.invalidCombinations) {
+                let matches = true;
+                for (const [key, value] of Object.entries(rule.conditions)) {
+                    if (state[key] !== value) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (matches) {
+                    return { valid: false, message: rule.message };
+                }
+            }
+
+            return { valid: true, message: '✅ Escenario económicamente coherente' };
+        }
+
+        // Actualización de UI de validación
+        function updateValidationUI() {
+            const validation = validateScenario();
+            const validationDiv = document.getElementById('validation-message');
+            
+            if (!state.fedPolicy || !state.inflation || !state.cycle || !state.geopolitical || !state.fiscal) {
+                validationDiv.innerHTML = '';
+                return;
+            }
+
+            if (validation.valid && validation.message) {
+                validationDiv.innerHTML = `<div class="validation-message valid">${validation.message}</div>`;
+            } else if (!validation.valid) {
+                validationDiv.innerHTML = `<div class="validation-message">${validation.message}</div>`;
+            }
+
+            // Deshabilitar botones según reglas
+            updateButtonStates();
+        }
+
+        function updateButtonStates() {
+            // Lógica para deshabilitar opciones incompatibles
+            const allButtons = document.querySelectorAll('.btn');
+            
+            allButtons.forEach(btn => {
+                btn.classList.remove('disabled');
+            });
+
+            // Ejemplos de deshabilitación
+            if (state.cycle === 'expansion' && state.inflation === 'high') {
+                // Ya está seleccionado pero es inválido - mostrar warning
+            }
+            
+            if (state.inflation === 'low') {
+                document.querySelectorAll('[data-var="fedPolicy"][data-value="aggressive-hike"]').forEach(btn => {
+                    if (!btn.classList.contains('active')) {
+                        btn.classList.add('disabled');
+                    }
+                });
+            }
+            
+            if (state.cycle === 'recession') {
+                document.querySelectorAll('[data-var="fedPolicy"][data-value="aggressive-hike"]').forEach(btn => {
+                    if (!btn.classList.contains('active')) {
+                        btn.classList.add('disabled');
+                    }
+                });
+            }
+        }
+
+        // Renderizar resultados
+        function renderResults() {
+            const validation = validateScenario();
+            
+            if (!state.fedPolicy || !state.inflation || !state.cycle || !state.geopolitical || !state.fiscal) {
+                return;
+            }
+
+            const scenarioKey = `${state.fedPolicy}-${state.inflation}-${state.cycle}-${state.geopolitical}-${state.fiscal}`;
+            const impacts = calculateImpacts(scenarioKey);
+            
+            const resultsDiv = document.getElementById('results-content');
+            
+            let html = `
+                <div class="scenario-header">
+                    <h2 class="scenario-title">${impacts.scenario}</h2>
+                    <div class="scenario-meta">
+                        <div class="meta-item">
+                            <span>📊</span>
+                            <span>Probabilidad histórica: <span class="meta-badge">${impacts.probability}</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="horizon-tabs">
+                    <div class="tab ${state.currentHorizon === 'short' ? 'active' : ''}" onclick="changeHorizon('short')">
+                        Corto Plazo (1-3 meses)
+                    </div>
+                    <div class="tab ${state.currentHorizon === 'medium' ? 'active' : ''}" onclick="changeHorizon('medium')">
+                        Mediano Plazo (6-12 meses)
+                    </div>
+                    <div class="tab ${state.currentHorizon === 'long' ? 'active' : ''}" onclick="changeHorizon('long')">
+                        Largo Plazo (1-3 años)
+                    </div>
+                </div>
+
+                <div class="assets-grid">
+            `;
+
+            // Agrupar activos por categoría
+            const categories = {
+                'Renta Fija': ['Bonos USA 2Y', 'Bonos USA 10-30Y', 'Bonos Corporativos IG', 'Bonos High Yield', 'TES Colombia'],
+                'Renta Variable': ['S&P 500', 'Nasdaq (Tech)', 'Sector Financiero', 'Sector Energía', 'Mercados Emergentes', 'Colcap'],
+                'Activos Alternativos': ['Oro', 'Petróleo WTI', 'Real Estate (REITs)', 'Commodities Agrícolas'],
+                'Divisas': ['DXY (Índice Dólar)', 'USD/COP', 'JPY (Yen)', 'CHF (Franco Suizo)']
+            };
+
+            const currentImpacts = impacts[state.currentHorizon];
+
+            for (const [category, assets] of Object.entries(categories)) {
+                html += `
+                    <div class="asset-category">
+                        <h3 class="category-title">${getCategoryIcon(category)} ${category}</h3>
+                        <div class="asset-items">
+                `;
+
+                assets.forEach(asset => {
+                    const impact = currentImpacts[asset];
+                    if (impact) {
+                        const arrow = impact.direction === 'up' ? '↑' : impact.direction === 'down' ? '↓' : '→';
+                        const arrowClass = impact.direction;
+                        
+                        html += `
+                            <div class="asset-item ${impact.direction}">
+                                <div class="asset-name">${asset}</div>
+                                <div class="asset-indicator">
+                                    <span class="arrow ${arrowClass}">${arrow}</span>
+                                    <span>${getDirectionText(impact.direction)}</span>
+                                </div>
+                                <div class="intensity ${impact.intensity}">${impact.intensity}</div>
+                                ${impact.rationale ? `<div class="rationale">${impact.rationale}</div>` : ''}
+                            </div>
+                        `;
+                    }
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+
+            // Agregar nota histórica si existe
+            if (impacts.historicalExamples && impacts.historicalExamples.length > 0) {
+                html += `
+                    <div class="historical-note">
+                        <h3>📚 Precedentes Históricos</h3>
+                        <ul>
+                            ${impacts.historicalExamples.map(ex => `<li>${ex}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'Renta Fija': '📄',
+                'Renta Variable': '📈',
+                'Activos Alternativos': '💎',
+                'Divisas': '💱'
+            };
+            return icons[category] || '📊';
+        }
+
+        function getDirectionText(direction) {
+            const texts = {
+                'up': 'Sube',
+                'down': 'Baja',
+                'neutral': 'Neutral'
+            };
+            return texts[direction] || 'N/A';
+        }
+
+        function changeHorizon(horizon) {
+            state.currentHorizon = horizon;
+            renderResults();
+        }
+
+        // Event listeners para botones
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (this.classList.contains('disabled')) return;
+                
+                const variable = this.dataset.var;
+                const value = this.dataset.value;
+                
+                // Remover active de otros botones del mismo grupo
+                document.querySelectorAll(`[data-var="${variable}"]`).forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Activar este botón
+                this.classList.add('active');
+                
+                // Actualizar estado
+                state[variable] = value;
+                
+                // Validar y actualizar UI
+                updateValidationUI();
+                renderResults();
+            });
+        });
+
+        // Inicialización
+        updateValidationUI();
+    </script>
+</body>
+</html>
