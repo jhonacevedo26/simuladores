@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Cotización de Bodas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 0;
+        }
+
+        .services-section {
+            padding: 40px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .input-group input[type="number"],
+        .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input[type="number"]:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .category {
+            margin-bottom: 30px;
+        }
+
+        .category-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .service-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .service-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .service-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .service-item label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .service-item .price-range {
+            color: #28a745;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .summary-section {
+            background: #f8f9fa;
+            padding: 40px;
+            border-left: 3px solid #ddd;
+            position: sticky;
+            top: 0;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .summary-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .summary-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .summary-item-name {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .summary-item-price {
+            color: #28a745;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .total-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .total-row.grand-total {
+            font-size: 1.5em;
+            font-weight: 700;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255,255,255,0.3);
+            margin-top: 15px;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+
+        .download-btn:active {
+            transform: scale(0.98);
+        }
+
+        .per-person-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #333;
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-section {
+                border-left: none;
+                border-top: 3px solid #ddd;
+                position: relative;
+            }
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quantity-control button {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .quantity-control input {
+            width: 60px;
+            text-align: center;
+            padding: 5px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .service-with-quantity {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💍 Simulador de Cotización de Bodas</h1>
+            <p>Planifica tu boda perfecta con estimaciones precisas de costos</p>
+        </div>
+
+        <div class="content">
+            <div class="services-section">
+                <div class="input-group">
+                    <label for="guests">👥 Número de Asistentes:</label>
+                    <input type="number" id="guests" min="1" value="100" placeholder="Ej: 100">
+                </div>
+
+                <div class="input-group">
+                    <label for="city">📍 Ciudad:</label>
+                    <select id="city">
+                        <option value="1">Cartagena</option>
+                        <option value="0.9">Bogotá</option>
+                        <option value="0.95">Medellín</option>
+                        <option value="0.85">Cali</option>
+                        <option value="1.05">Santa Marta</option>
+                        <option value="0.8">Barranquilla</option>
+                        <option value="0.75">Otras ciudades</option>
+                    </select>
+                </div>
+
+                <div id="categories"></div>
+            </div>
+
+            <div class="summary-section">
+                <h2 class="summary-title">📋 Resumen de tu Boda</h2>
+                <div id="summary-items"></div>
+                <div class="total-section">
+                    <div class="total-row">
+                        <span>Mínimo Estimado:</span>
+                        <span id="min-total">$0</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Máximo Estimado:</span>
+                        <span id="max-total">$0</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>Promedio:</span>
+                        <span id="avg-total">$0</span>
+                    </div>
+                    <div class="per-person-info">
+                        <strong>Costo por persona:</strong>
+                        <div id="per-person">$0 - $0</div>
+                    </div>
+                </div>
+                <button class="download-btn" onclick="downloadPDF()">📥 Descargar Cotización PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const services = {
+            "Locación y Espacios": [
+                { name: "Alquiler de salón/casa hotel", min: 8000000, max: 35000000 },
+                { name: "Decoración y ambientación", min: 4000000, max: 18000000 },
+                { name: "Mobiliario (sillas, mesas, mantelería)", min: 2500000, max: 8000000 },
+                { name: "Iluminación especial", min: 1500000, max: 6000000 }
+            ],
+            "Catering y Bebidas": [
+                { name: "Servicio de alimentación", min: 80000, max: 250000, perPerson: true },
+                { name: "Barra libre/Licores", min: 3000000, max: 12000000 },
+                { name: "Torta de matrimonio", min: 600000, max: 2500000 },
+                { name: "Mesa de postres", min: 800000, max: 3000000 },
+                { name: "Estación de café y té", min: 400000, max: 1200000 }
+            ],
+            "Entretenimiento": [
+                { name: "Grupo musical/DJ", min: 2500000, max: 15000000 },
+                { name: "Sonido y audio profesional", min: 1200000, max: 4500000 },
+                { name: "Pista de baile", min: 800000, max: 2000000 },
+                { name: "Animación/Show especial", min: 1500000, max: 8000000 }
+            ],
+            "Fotografía y Video": [
+                { name: "Fotografía profesional", min: 2000000, max: 8000000 },
+                { name: "Video y cinematografía", min: 2500000, max: 10000000 },
+                { name: "Drone para tomas aéreas", min: 600000, max: 2000000 },
+                { name: "Fotocabina/Photobooth", min: 800000, max: 2500000 }
+            ],
+            "Ceremonia": [
+                { name: "Oficiante/Sacerdote", min: 300000, max: 1500000 },
+                { name: "Decoración de ceremonia", min: 1500000, max: 5000000 },
+                { name: "Música para ceremonia", min: 600000, max: 2000000 }
+            ],
+            "Papelería y Detalles": [
+                { name: "Invitaciones impresas", min: 500000, max: 3000000 },
+                { name: "Menús y señalización", min: 300000, max: 1200000 },
+                { name: "Recuerdos para invitados", min: 800000, max: 4000000 },
+                { name: "Libro de firmas", min: 150000, max: 600000 }
+            ],
+            "Vestuario y Estética": [
+                { name: "Vestido de novia", min: 3000000, max: 20000000 },
+                { name: "Traje del novio", min: 1500000, max: 6000000 },
+                { name: "Peluquería y maquillaje", min: 800000, max: 3000000 }
+            ],
+            "Transporte y Logística": [
+                { name: "Transporte de novios", min: 600000, max: 3000000 },
+                { name: "Transporte de invitados", min: 1500000, max: 5000000 },
+                { name: "Coordinador de bodas", min: 2000000, max: 8000000 }
+            ],
+            "Hospedaje": [
+                { name: "Habitación de novios (suite)", min: 800000, max: 3000000 },
+                { name: "Habitaciones para invitados", min: 2000000, max: 10000000 }
+            ],
+            "Flores": [
+                { name: "Ramo de novia", min: 300000, max: 1500000 },
+                { name: "Arreglos florales (centros de mesa)", min: 2000000, max: 8000000 },
+                { name: "Boutonniere y corsages", min: 200000, max: 800000 }
+            ]
+        };
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categories');
+            container.innerHTML = '';
+
+            Object.keys(services).forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+
+                const categoryTitle = document.createElement('div');
+                categoryTitle.className = 'category-title';
+                categoryTitle.textContent = category;
+                categoryDiv.appendChild(categoryTitle);
+
+                services[category].forEach((service, index) => {
+                    const serviceDiv = document.createElement('div');
+                    serviceDiv.className = 'service-item';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `${category}-${index}`;
+                    checkbox.onchange = updateSummary;
+
+                    const serviceContent = document.createElement('div');
+                    serviceContent.className = 'service-with-quantity';
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `${category}-${index}`;
+                    label.textContent = service.name;
+
+                    const priceRange = document.createElement('div');
+                    priceRange.className = 'price-range';
+                    
+                    if (service.perPerson) {
+                        priceRange.textContent = `${formatCurrency(service.min)} - ${formatCurrency(service.max)} por persona`;
+                    } else {
+                        priceRange.textContent = `${formatCurrency(service.min)} - ${formatCurrency(service.max)}`;
+                    }
+
+                    serviceContent.appendChild(label);
+                    serviceContent.appendChild(priceRange);
+
+                    serviceDiv.appendChild(checkbox);
+                    serviceDiv.appendChild(serviceContent);
+
+                    categoryDiv.appendChild(serviceDiv);
+                });
+
+                container.appendChild(categoryDiv);
+            });
+        }
+
+        function updateSummary() {
+            const guests = parseInt(document.getElementById('guests').value) || 1;
+            const cityFactor = parseFloat(document.getElementById('city').value);
+            
+            let minTotal = 0;
+            let maxTotal = 0;
+            const selectedItems = [];
+
+            Object.keys(services).forEach(category => {
+                services[category].forEach((service, index) => {
+                    const checkbox = document.getElementById(`${category}-${index}`);
+                    if (checkbox && checkbox.checked) {
+                        let min = service.min;
+                        let max = service.max;
+
+                        if (service.perPerson) {
+                            min *= guests;
+                            max *= guests;
+                        }
+
+                        min *= cityFactor;
+                        max *= cityFactor;
+
+                        minTotal += min;
+                        maxTotal += max;
+
+                        selectedItems.push({
+                            category,
+                            name: service.name,
+                            min,
+                            max,
+                            perPerson: service.perPerson
+                        });
+                    }
+                });
+            });
+
+            const summaryContainer = document.getElementById('summary-items');
+            summaryContainer.innerHTML = '';
+
+            if (selectedItems.length === 0) {
+                summaryContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Selecciona servicios para ver el resumen</p>';
+            } else {
+                selectedItems.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'summary-item';
+                    itemDiv.innerHTML = `
+                        <div class="summary-item-name">${item.name}</div>
+                        <div class="summary-item-price">${formatCurrency(item.min)} - ${formatCurrency(item.max)}</div>
+                    `;
+                    summaryContainer.appendChild(itemDiv);
+                });
+            }
+
+            document.getElementById('min-total').textContent = formatCurrency(minTotal);
+            document.getElementById('max-total').textContent = formatCurrency(maxTotal);
+            document.getElementById('avg-total').textContent = formatCurrency((minTotal + maxTotal) / 2);
+
+            if (guests > 0) {
+                const minPerPerson = minTotal / guests;
+                const maxPerPerson = maxTotal / guests;
+                document.getElementById('per-person').textContent = `${formatCurrency(minPerPerson)} - ${formatCurrency(maxPerPerson)}`;
+            }
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const guests = parseInt(document.getElementById('guests').value) || 1;
+            const citySelect = document.getElementById('city');
+            const cityName = citySelect.options[citySelect.selectedIndex].text;
+            const cityFactor = parseFloat(citySelect.value);
+            
+            let minTotal = 0;
+            let maxTotal = 0;
+            const selectedItems = [];
+
+            Object.keys(services).forEach(category => {
+                services[category].forEach((service, index) => {
+                    const checkbox = document.getElementById(`${category}-${index}`);
+                    if (checkbox && checkbox.checked) {
+                        let min = service.min;
+                        let max = service.max;
+
+                        if (service.perPerson) {
+                            min *= guests;
+                            max *= guests;
+                        }
+
+                        min *= cityFactor;
+                        max *= cityFactor;
+
+                        minTotal += min;
+                        maxTotal += max;
+
+                        selectedItems.push({
+                            category,
+                            name: service.name,
+                            min,
+                            max
+                        });
+                    }
+                });
+            });
+
+            // Header
+            doc.setFillColor(102, 126, 234);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.text('Cotización de Boda', 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text(`Ciudad: ${cityName} | Asistentes: ${guests}`, 105, 30, { align: 'center' });
+
+            // Body
+            doc.setTextColor(0, 0, 0);
+            let y = 50;
+
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Servicios Seleccionados:', 20, y);
+            y += 10;
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+
+            let currentCategory = '';
+            selectedItems.forEach(item => {
+                if (item.category !== currentCategory) {
+                    y += 5;
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(102, 126, 234);
+                    doc.text(item.category, 20, y);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont(undefined, 'normal');
+                    y += 6;
+                    currentCategory = item.category;
+                }
+
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+
+                doc.text(`• ${item.name}`, 25, y);
+                doc.text(`${formatCurrency(item.min)} - ${formatCurrency(item.max)}`, 150, y);
+                y += 6;
+            });
+
+            // Total section
+            y += 10;
+            if (y > 250) {
+                doc.addPage();
+                y = 20;
+            }
+
+            doc.setFillColor(102, 126, 234);
+            doc.rect(20, y, 170, 40, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(12);
+            doc.text(`Mínimo Estimado: ${formatCurrency(minTotal)}`, 25, y + 10);
+            doc.text(`Máximo Estimado: ${formatCurrency(maxTotal)}`, 25, y + 20);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Promedio: ${formatCurrency((minTotal + maxTotal) / 2)}`, 25, y + 32);
+
+            const avgPerPerson = ((minTotal + maxTotal) / 2) / guests;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Costo promedio por persona: ${formatCurrency(avgPerPerson)}`, 105, y + 38, { align: 'center' });
+
+            doc.save(`Cotizacion_Boda_${cityName}_${guests}personas.pdf`);
+        }
+
+        // Initialize
+        renderCategories();
+        document.getElementById('guests').addEventListener('input', updateSummary);
+        document.getElementById('city').addEventListener('change', updateSummary);
+        updateSummary();
+    </script>
+</body>
+</html>
