@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Pensión - Diagnóstico Personalizado</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #0A2540;
+            --primary-light: #1a3a5c;
+            --accent: #00D4AA;
+            --accent-dark: #00b894;
+            --warning: #FF6B6B;
+            --bg-light: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --text-primary: #0A2540;
+            --text-secondary: #64748B;
+            --border: #E2E8F0;
+            --shadow: 0 4px 6px -1px rgba(10, 37, 64, 0.1), 0 2px 4px -2px rgba(10, 37, 64, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(10, 37, 64, 0.1), 0 8px 10px -6px rgba(10, 37, 64, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 24px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 212, 170, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            color: white;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Progress Steps */
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--bg-card);
+            border-radius: 50px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(0, 212, 170, 0.05) 100%);
+        }
+
+        .progress-step.completed {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: white;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .progress-step.active .step-number {
+            background: var(--accent);
+            color: white;
+        }
+
+        .progress-step.completed .step-number {
+            background: white;
+            color: var(--accent);
+        }
+
+        .step-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-title-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Label with tooltip */
+        .label-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .label-hint {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        /* Tooltip styles */
+        .tooltip-container {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .tooltip-icon {
+            width: 18px;
+            height: 18px;
+            background: var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            cursor: help;
+            transition: all 0.3s ease;
+        }
+
+        .tooltip-icon:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            width: 280px;
+            text-align: left;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            line-height: 1.5;
+        }
+
+        .tooltip-text::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: var(--primary);
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Mobile tooltip adjustment */
+        @media (max-width: 600px) {
+            .tooltip-text {
+                width: 220px;
+                left: 0;
+                transform: translateX(0);
+            }
+            .tooltip-text::after {
+                left: 14px;
+                transform: translateX(0);
+            }
+        }
+
+        input, select {
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Gender Toggle */
+        .gender-toggle {
+            display: flex;
+            gap: 12px;
+        }
+
+        .gender-option {
+            flex: 1;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
+        }
+
+        .gender-option:hover {
+            border-color: var(--accent);
+        }
+
+        .gender-option.selected {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(0, 212, 170, 0.05) 100%);
+        }
+
+        .gender-option input {
+            display: none;
+        }
+
+        .gender-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .gender-label {
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(0, 212, 170, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            background: white;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(10, 37, 64, 0.3);
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(10, 37, 64, 0.4);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        /* Results Section */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .result-card {
+            background: var(--bg-light);
+            border-radius: 16px;
+            padding: 24px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .result-card.highlight {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(0, 212, 170, 0.02) 100%);
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .result-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .result-icon.colpensiones { background: #E8F5E9; }
+        .result-icon.privado { background: #E3F2FD; }
+        .result-icon.reforma { background: #FFF3E0; }
+
+        .result-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary);
+        }
+
+        .result-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .result-range {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Brecha Card */
+        .brecha-card {
+            background: linear-gradient(135deg, var(--warning) 0%, #ee5a5a 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brecha-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .brecha-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .brecha-text {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(0, 212, 170, 0.05) 100%);
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .info-box h4 {
+            color: var(--accent-dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box ul {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .info-box li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .info-box li::before {
+            content: '✓';
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Summary Stats */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-light);
+            border-radius: 12px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 0.85rem;
+            color: #92400E;
+            margin-top: 24px;
+        }
+
+        .disclaimer-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 30px 16px;
+            }
+
+            .progress-step {
+                padding: 8px 14px;
+            }
+
+            .step-label {
+                display: none;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .gender-toggle {
+                flex-direction: column;
+            }
+        }
+
+        /* Print/PDF Styles */
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Hijos field transition */
+        .hijos-field {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>📊 Calculadora de Pensión</h1>
+            <p>Descubre cuánto recibirás en tu jubilación y cómo prepararte para el futuro</p>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="progress-container no-print">
+            <div class="progress-step active" id="progress-1">
+                <span class="step-number">1</span>
+                <span class="step-label">Datos Personales</span>
+            </div>
+            <div class="progress-step" id="progress-2">
+                <span class="step-number">2</span>
+                <span class="step-label">Datos Laborales</span>
+            </div>
+            <div class="progress-step" id="progress-3">
+                <span class="step-number">3</span>
+                <span class="step-label">Diagnóstico</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Datos Personales -->
+        <div class="card" id="step1">
+            <h2 class="card-title">
+                <span class="card-title-icon">👤</span>
+                Datos Personales
+            </h2>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <div class="label-row">
+                        <label>Nombre completo</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Ingresa tu nombre completo tal como aparece en tu documento de identidad. Esto nos ayuda a personalizar tu diagnóstico.</span>
+                        </div>
+                    </div>
+                    <input type="text" id="nombre" placeholder="Ej: Juan Pérez García" required>
+                </div>
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>Correo electrónico</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Tu correo electrónico donde podremos enviarte información adicional sobre tu diagnóstico y estrategias de ahorro.</span>
+                        </div>
+                    </div>
+                    <input type="email" id="email" placeholder="tucorreo@ejemplo.com" required>
+                </div>
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>Teléfono</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Número de contacto para brindarte asesoría personalizada si lo deseas.</span>
+                        </div>
+                    </div>
+                    <input type="tel" id="telefono" placeholder="300 123 4567" required>
+                </div>
+                <div class="form-group full-width">
+                    <div class="label-row">
+                        <label>Género</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text"><strong>Importante:</strong> La edad de pensión varía según género. Hombres: 62 años. Mujeres: 57 años. Además, las mujeres tienen beneficios adicionales por reducción de semanas.</span>
+                        </div>
+                    </div>
+                    <div class="gender-toggle">
+                        <label class="gender-option" id="gender-hombre">
+                            <input type="radio" name="genero" value="Hombre">
+                            <div class="gender-icon">👨</div>
+                            <div class="gender-label">Hombre</div>
+                            <div class="label-hint">Pensión a los 62 años</div>
+                        </label>
+                        <label class="gender-option" id="gender-mujer">
+                            <input type="radio" name="genero" value="Mujer">
+                            <div class="gender-icon">👩</div>
+                            <div class="gender-label">Mujer</div>
+                            <div class="label-hint">Pensión a los 57 años</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>Edad actual</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Tu edad actual en años cumplidos. Esto nos permite calcular cuántos años te faltan para llegar a la edad de pensión.</span>
+                        </div>
+                    </div>
+                    <input type="number" id="edad" placeholder="35" min="18" max="70" required>
+                </div>
+                <div class="form-group hijos-field hidden" id="hijos-container">
+                    <div class="label-row">
+                        <label>Número de hijos</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text"><strong>Beneficio para mujeres:</strong> Por cada hijo se reducen 50 semanas del requisito para pensionarse (máximo 3 hijos = 150 semanas menos).</span>
+                        </div>
+                    </div>
+                    <select id="hijos">
+                        <option value="0">0 hijos</option>
+                        <option value="1">1 hijo</option>
+                        <option value="2">2 hijos</option>
+                        <option value="3">3 hijos o más</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="goToStep(2)">
+                    Continuar
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Datos Laborales -->
+        <div class="card hidden" id="step2">
+            <h2 class="card-title">
+                <span class="card-title-icon">💼</span>
+                Datos Laborales y Pensionales
+            </h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>IBL (Ingreso Base de Liquidación)</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text"><strong>IBL:</strong> Es el promedio de los salarios sobre los cuales cotizaste durante los últimos 10 años. Si no lo conoces exactamente, puedes usar tu salario actual como referencia. Puedes consultarlo en tu historia laboral de Colpensiones.</span>
+                        </div>
+                    </div>
+                    <input type="text" id="ibl" placeholder="$5.000.000" required>
+                </div>
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>Semanas cotizadas</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text"><strong>Semanas cotizadas:</strong> Total de semanas que has aportado a pensión durante tu vida laboral. Puedes consultarlas en tu historia laboral de Colpensiones o tu fondo privado. 1 año = aproximadamente 52 semanas.</span>
+                        </div>
+                    </div>
+                    <input type="number" id="semanas" placeholder="800" min="0" max="3000" required>
+                </div>
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>Salario Mínimo 2026</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text"><strong>SMLV:</strong> Salario Mínimo Legal Vigente. Se usa como referencia para calcular la tasa de reemplazo y los topes de pensión. Puedes editarlo si cambia.</span>
+                        </div>
+                    </div>
+                    <input type="text" id="smlv" value="$1.750.905">
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="goToStep(1)">
+                    <span>←</span>
+                    Atrás
+                </button>
+                <button class="btn btn-primary" onclick="calcularPension()" id="btn-calcular">
+                    Ver mi diagnóstico
+                    <span>📊</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Resultados -->
+        <div class="card hidden" id="step3">
+            <div id="resultados-content">
+                <h2 class="card-title">
+                    <span class="card-title-icon">📋</span>
+                    Tu Diagnóstico Pensional
+                </h2>
+
+                <!-- Nombre del usuario -->
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">Diagnóstico generado para: <strong id="res-nombre" style="color: var(--primary);"></strong></p>
+
+                <!-- Resumen Personal -->
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="res-edad-pension">62</div>
+                        <div class="stat-label">Edad de pensión</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="res-anos-restantes">27</div>
+                        <div class="stat-label">Años restantes</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="res-semanas-req">1,300</div>
+                        <div class="stat-label">Semanas requeridas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="res-semanas-faltantes">500</div>
+                        <div class="stat-label">Semanas faltantes</div>
+                    </div>
+                </div>
+
+                <!-- Comparativo de Escenarios -->
+                <h3 style="margin-bottom: 16px; color: var(--primary);">Comparativo de Escenarios</h3>
+                <div class="results-grid">
+                    <!-- Colpensiones -->
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon colpensiones">🏛️</div>
+                            <div>
+                                <div class="result-title">Colpensiones</div>
+                                <div class="result-subtitle">Régimen de Prima Media</div>
+                            </div>
+                        </div>
+                        <div class="result-value" id="res-colpensiones">$0</div>
+                        <div class="result-range">Tasa de reemplazo: <span id="res-tasa-colp">0%</span></div>
+                    </div>
+
+                    <!-- Fondo Privado -->
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon privado">🏦</div>
+                            <div>
+                                <div class="result-title">Fondo Privado</div>
+                                <div class="result-subtitle">Ahorro Individual (RAIS)</div>
+                            </div>
+                        </div>
+                        <div class="result-value" id="res-privado-optimista">$0</div>
+                        <div class="result-range">Rango: <span id="res-privado-conservador">$0</span> - <span id="res-privado-optimista-2">$0</span></div>
+                    </div>
+
+                    <!-- Reforma -->
+                    <div class="result-card highlight">
+                        <div class="result-header">
+                            <div class="result-icon reforma">⚖️</div>
+                            <div>
+                                <div class="result-title">Reforma Pensional</div>
+                                <div class="result-subtitle">Sistema Mixto (2.5 SMLV + Excedente)</div>
+                            </div>
+                        </div>
+                        <div class="result-value" id="res-reforma-optimista">$0</div>
+                        <div class="result-range">Rango: <span id="res-reforma-conservador">$0</span> - <span id="res-reforma-optimista-2">$0</span></div>
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.85rem;">
+                            <div>Parte Colpensiones: <strong id="res-reforma-colp">$0</strong></div>
+                            <div>Parte Fondo Privado: <strong id="res-reforma-priv">$0 - $0</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brecha Pensional -->
+                <div class="brecha-card">
+                    <h3>⚠️ Tu Brecha Pensional Mensual</h3>
+                    <div class="brecha-value" id="res-brecha">-$3.436.000</div>
+                    <p class="brecha-text">Esta es la diferencia entre tu ingreso actual y tu mejor pensión estimada. Para mantener tu calidad de vida, necesitas cubrir esta brecha.</p>
+                </div>
+
+                <!-- Recomendación -->
+                <div class="info-box">
+                    <h4>💡 Recomendación: Acumulación Paralela</h4>
+                    <p style="margin-bottom: 12px;">Para cerrar tu brecha pensional y mantener o mejorar tu calidad de vida, considera estas estrategias:</p>
+                    <ul>
+                        <li>Ahorro voluntario en pensiones</li>
+                        <li>Fondos de inversión colectiva</li>
+                        <li>Inversiones en propiedad raíz</li>
+                        <li>Portafolios diversificados en bolsa</li>
+                        <li>Fondos de capital privado</li>
+                    </ul>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="disclaimer">
+                    <div class="disclaimer-title">⚠️ Aviso Legal Importante</div>
+                    <p>Esta es una <strong>proyección estimada con fines educativos</strong>. Las condiciones laborales, normativas y reformas pensionales pueden cambiar en el futuro. Este cálculo <strong>no constituye asesoría financiera formal</strong>. Los porcentajes del fondo privado (40%-45%) son estimaciones conservadoras basadas en promedios históricos del mercado. Para decisiones importantes sobre tu pensión, consulta con un profesional certificado.</p>
+                </div>
+            </div>
+
+            <div class="btn-group no-print">
+                <button class="btn btn-secondary" onclick="goToStep(2)">
+                    <span>←</span>
+                    Modificar datos
+                </button>
+                <button class="btn btn-download" onclick="descargarPDF()">
+                    <span>📥</span>
+                    Descargar diagnóstico PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN - GOOGLE SHEETS ENDPOINT
+        // ============================================
+        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzX-LMsgHtUd30MaSoJQoECfAe8X2Y-8ICJFGpBvUF9rjuIUv4gpg2MsB6Yg-10R1HUmw/exec';
+
+        // Variables globales para resultados
+        let resultadosCalculados = {};
+
+        // ============================================
+        // UTILIDADES DE FORMATO
+        // ============================================
+        
+        // Formatear número como moneda colombiana
+        function formatCurrency(num) {
+            return '$' + Math.round(num).toLocaleString('es-CO');
+        }
+
+        // Parsear moneda a número
+        function parseCurrency(str) {
+            return parseInt(str.replace(/[^\d]/g, '')) || 0;
+        }
+
+        // Formatear input de moneda mientras escribe
+        function formatCurrencyInput(input) {
+            let value = input.value.replace(/[^\d]/g, '');
+            if (value) {
+                input.value = '$' + parseInt(value).toLocaleString('es-CO');
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        // Formateo de moneda en inputs
+        document.getElementById('ibl').addEventListener('input', function() {
+            formatCurrencyInput(this);
+        });
+
+        document.getElementById('smlv').addEventListener('input', function() {
+            formatCurrencyInput(this);
+        });
+
+        // Manejar selección de género
+        document.querySelectorAll('.gender-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.gender-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+
+                // Mostrar/ocultar campo de hijos
+                const hijosContainer = document.getElementById('hijos-container');
+                if (this.querySelector('input').value === 'Mujer') {
+                    hijosContainer.classList.remove('hidden');
+                } else {
+                    hijosContainer.classList.add('hidden');
+                }
+            });
+        });
+
+        // ============================================
+        // NAVEGACIÓN ENTRE PASOS
+        // ============================================
+
+        function goToStep(step) {
+            // Validar paso actual antes de avanzar
+            if (step === 2 && !validarPaso1()) return;
+
+            // Ocultar todos los pasos
+            document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));
+            
+            // Mostrar paso seleccionado
+            document.getElementById('step' + step).classList.remove('hidden');
+
+            // Actualizar indicadores de progreso
+            for (let i = 1; i <= 3; i++) {
+                const progressStep = document.getElementById('progress-' + i);
+                progressStep.classList.remove('active', 'completed');
+                if (i < step) {
+                    progressStep.classList.add('completed');
+                } else if (i === step) {
+                    progressStep.classList.add('active');
+                }
+            }
+
+            // Scroll al inicio
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ============================================
+        // VALIDACIONES
+        // ============================================
+
+        function validarPaso1() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const genero = document.querySelector('input[name="genero"]:checked');
+            const edad = document.getElementById('edad').value;
+
+            if (!nombre) {
+                alert('Por favor ingresa tu nombre completo');
+                document.getElementById('nombre').focus();
+                return false;
+            }
+            if (!email || !email.includes('@')) {
+                alert('Por favor ingresa un correo electrónico válido');
+                document.getElementById('email').focus();
+                return false;
+            }
+            if (!telefono) {
+                alert('Por favor ingresa tu número de teléfono');
+                document.getElementById('telefono').focus();
+                return false;
+            }
+            if (!genero) {
+                alert('Por favor selecciona tu género');
+                return false;
+            }
+            if (!edad || edad < 18 || edad > 70) {
+                alert('Por favor ingresa una edad válida (18-70 años)');
+                document.getElementById('edad').focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        function validarPaso2() {
+            const ibl = parseCurrency(document.getElementById('ibl').value);
+            const semanas = parseInt(document.getElementById('semanas').value);
+            const smlv = parseCurrency(document.getElementById('smlv').value);
+
+            if (!ibl || ibl < 1) {
+                alert('Por favor ingresa tu Ingreso Base de Liquidación (IBL)');
+                document.getElementById('ibl').focus();
+                return false;
+            }
+            if (isNaN(semanas) || semanas < 0) {
+                alert('Por favor ingresa tus semanas cotizadas');
+                document.getElementById('semanas').focus();
+                return false;
+            }
+            if (!smlv || smlv < 1) {
+                alert('Por favor verifica el salario mínimo');
+                document.getElementById('smlv').focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        // ============================================
+        // CÁLCULO DE SEMANAS PARA MUJERES
+        // ============================================
+
+        function calcularSemanasRequeridasMujer(anoPension, hijos) {
+            const anoBase = 2025;
+            const semanasBase = 1300;
+            const reduccionPorAno = 25;
+            const semanasMinimas = 1000;
+            const reduccionPorHijo = 50;
+            const maxHijos = 3;
+
+            let anosTranscurridos = anoPension - anoBase;
+            if (anosTranscurridos < 0) anosTranscurridos = 0;
+
+            let semanasAno = semanasBase - (anosTranscurridos * reduccionPorAno);
+            if (semanasAno < semanasMinimas) semanasAno = semanasMinimas;
+
+            // Aplicar reducción por hijos
+            const hijosAplicables = Math.min(hijos, maxHijos);
+            let semanasFinales = semanasAno - (hijosAplicables * reduccionPorHijo);
+
+            return Math.max(semanasFinales, 850); // Mínimo razonable
+        }
+
+        // ============================================
+        // CÁLCULO PRINCIPAL DE PENSIÓN
+        // ============================================
+
+        function calcularPension() {
+            if (!validarPaso2()) return;
+
+            const btn = document.getElementById('btn-calcular');
+            btn.innerHTML = '<span class="spinner"></span> Enviando datos...';
+            btn.disabled = true;
+
+            // Obtener datos del formulario
+            const nombre = document.getElementById('nombre').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const genero = document.querySelector('input[name="genero"]:checked').value;
+            const edad = parseInt(document.getElementById('edad').value);
+            const hijos = genero === 'Mujer' ? parseInt(document.getElementById('hijos').value) : 0;
+            const ibl = parseCurrency(document.getElementById('ibl').value);
+            const semanasCotizadas = parseInt(document.getElementById('semanas').value);
+            const smlv = parseCurrency(document.getElementById('smlv').value);
+
+            // Calcular edad de pensión y años restantes
+            const edadPension = genero === 'Hombre' ? 62 : 57;
+            const anosRestantes = Math.max(0, edadPension - edad);
+            const anoActual = 2026;
+            const anoPension = anoActual + anosRestantes;
+
+            // Calcular semanas requeridas
+            let semanasRequeridas;
+            if (genero === 'Hombre') {
+                semanasRequeridas = 1300;
+            } else {
+                semanasRequeridas = calcularSemanasRequeridasMujer(anoPension, hijos);
+            }
+
+            const semanasFaltantes = Math.max(0, semanasRequeridas - semanasCotizadas);
+
+            // ========== ESCENARIO 1: COLPENSIONES ==========
+            const S = ibl / smlv;
+            let R = 65.5 - (0.5 * S);
+            
+            // Semanas adicionales (máximo 1800)
+            const semanasParaCalculo = Math.min(semanasCotizadas, 1800);
+            const semanasAdicionales = Math.max(0, semanasParaCalculo - semanasRequeridas);
+            const bloques = Math.floor(semanasAdicionales / 50);
+            const adicional = bloques * 1.5;
+
+            const tasaFinalColp = R + adicional;
+            let pensionColpensiones = ibl * (tasaFinalColp / 100);
+
+            // Aplicar topes
+            const pensionMinima = smlv;
+            const pensionMaxima = smlv * 25;
+
+            if (pensionColpensiones < pensionMinima) pensionColpensiones = pensionMinima;
+            if (pensionColpensiones > pensionMaxima) pensionColpensiones = pensionMaxima;
+
+            // ========== ESCENARIO 2: FONDO PRIVADO ==========
+            let pensionPrivadoConservador = ibl * 0.40;
+            let pensionPrivadoOptimista = ibl * 0.45;
+
+            // Aplicar topes
+            if (pensionPrivadoConservador < pensionMinima) pensionPrivadoConservador = pensionMinima;
+            if (pensionPrivadoConservador > pensionMaxima) pensionPrivadoConservador = pensionMaxima;
+            if (pensionPrivadoOptimista < pensionMinima) pensionPrivadoOptimista = pensionMinima;
+            if (pensionPrivadoOptimista > pensionMaxima) pensionPrivadoOptimista = pensionMaxima;
+
+            // ========== ESCENARIO 3: REFORMA (MIXTO) ==========
+            const limiteColpensiones = smlv * 2.5;
+            const iblColpensiones = Math.min(ibl, limiteColpensiones);
+            const iblPrivado = Math.max(0, ibl - limiteColpensiones);
+
+            // Parte Colpensiones (sobre primeros 2.5 SMLV)
+            const S_reforma = iblColpensiones / smlv;
+            let R_reforma = 65.5 - (0.5 * S_reforma);
+            const tasaFinalReformaColp = R_reforma + adicional;
+            let pensionReformaColp = iblColpensiones * (tasaFinalReformaColp / 100);
+
+            // Parte Fondo Privado (sobre excedente)
+            let pensionReformaPrivConservador = iblPrivado * 0.40;
+            let pensionReformaPrivOptimista = iblPrivado * 0.45;
+
+            // Total Reforma
+            let pensionReformaTotalConservador = pensionReformaColp + pensionReformaPrivConservador;
+            let pensionReformaTotalOptimista = pensionReformaColp + pensionReformaPrivOptimista;
+
+            // Aplicar topes al total
+            if (pensionReformaTotalConservador < pensionMinima) pensionReformaTotalConservador = pensionMinima;
+            if (pensionReformaTotalConservador > pensionMaxima) pensionReformaTotalConservador = pensionMaxima;
+            if (pensionReformaTotalOptimista < pensionMinima) pensionReformaTotalOptimista = pensionMinima;
+            if (pensionReformaTotalOptimista > pensionMaxima) pensionReformaTotalOptimista = pensionMaxima;
+
+            // ========== BRECHA PENSIONAL ==========
+            const mejorPension = Math.max(pensionColpensiones, pensionPrivadoOptimista, pensionReformaTotalOptimista);
+            const brechaPensional = ibl - mejorPension;
+
+            // Guardar resultados
+            resultadosCalculados = {
+                nombre,
+                email,
+                telefono,
+                genero,
+                edad,
+                hijos,
+                ibl,
+                semanasCotizadas,
+                smlv,
+                pensionColpensiones: Math.round(pensionColpensiones),
+                pensionPrivadoConservador: Math.round(pensionPrivadoConservador),
+                pensionPrivadoOptimista: Math.round(pensionPrivadoOptimista),
+                pensionReformaConservador: Math.round(pensionReformaTotalConservador),
+                pensionReformaOptimista: Math.round(pensionReformaTotalOptimista),
+                brechaPensional: Math.round(brechaPensional),
+                anoEstimadoPension: anoPension,
+                semanasRequeridas,
+                semanasFaltantes,
+                edadPension,
+                anosRestantes,
+                tasaFinalColp,
+                pensionReformaColp: Math.round(pensionReformaColp),
+                pensionReformaPrivConservador: Math.round(pensionReformaPrivConservador),
+                pensionReformaPrivOptimista: Math.round(pensionReformaPrivOptimista)
+            };
+
+            // PRIMERO enviar a Google Sheets, LUEGO mostrar resultados
+            enviarAGoogleSheets(resultadosCalculados)
+                .then(() => {
+                    console.log('Datos enviados correctamente a Google Sheets');
+                    mostrarResultados(resultadosCalculados);
+                    goToStep(3);
+                })
+                .catch(error => {
+                    console.error('Error al enviar datos:', error);
+                    // Aún así mostrar resultados si falla el envío
+                    mostrarResultados(resultadosCalculados);
+                    goToStep(3);
+                })
+                .finally(() => {
+                    btn.innerHTML = 'Ver mi diagnóstico <span>📊</span>';
+                    btn.disabled = false;
+                });
+        }
+
+        // ============================================
+        // ENVÍO A GOOGLE SHEETS
+        // ============================================
+
+        async function enviarAGoogleSheets(datos) {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(datos)
+                });
+                return true;
+            } catch (error) {
+                console.error('Error enviando a Google Sheets:', error);
+                throw error;
+            }
+        }
+
+        // ============================================
+        // MOSTRAR RESULTADOS
+        // ============================================
+
+        function mostrarResultados(res) {
+            // Nombre del usuario
+            document.getElementById('res-nombre').textContent = res.nombre;
+
+            // Resumen stats
+            document.getElementById('res-edad-pension').textContent = res.edadPension;
+            document.getElementById('res-anos-restantes').textContent = res.anosRestantes;
+            document.getElementById('res-semanas-req').textContent = res.semanasRequeridas.toLocaleString('es-CO');
+            document.getElementById('res-semanas-faltantes').textContent = res.semanasFaltantes > 0 ? res.semanasFaltantes.toLocaleString('es-CO') : '✓ Cumple';
+
+            // Colpensiones
+            document.getElementById('res-colpensiones').textContent = formatCurrency(res.pensionColpensiones);
+            document.getElementById('res-tasa-colp').textContent = res.tasaFinalColp.toFixed(2) + '%';
+
+            // Fondo Privado
+            document.getElementById('res-privado-optimista').textContent = formatCurrency(res.pensionPrivadoOptimista);
+            document.getElementById('res-privado-conservador').textContent = formatCurrency(res.pensionPrivadoConservador);
+            document.getElementById('res-privado-optimista-2').textContent = formatCurrency(res.pensionPrivadoOptimista);
+
+            // Reforma
+            document.getElementById('res-reforma-optimista').textContent = formatCurrency(res.pensionReformaOptimista);
+            document.getElementById('res-reforma-conservador').textContent = formatCurrency(res.pensionReformaConservador);
+            document.getElementById('res-reforma-optimista-2').textContent = formatCurrency(res.pensionReformaOptimista);
+            document.getElementById('res-reforma-colp').textContent = formatCurrency(res.pensionReformaColp);
+            document.getElementById('res-reforma-priv').textContent = formatCurrency(res.pensionReformaPrivConservador) + ' - ' + formatCurrency(res.pensionReformaPrivOptimista);
+
+            // Brecha
+            const brechaElement = document.getElementById('res-brecha');
+            if (res.brechaPensional > 0) {
+                brechaElement.textContent = '-' + formatCurrency(res.brechaPensional);
+            } else {
+                brechaElement.textContent = formatCurrency(Math.abs(res.brechaPensional));
+                brechaElement.style.color = '#00D4AA';
+            }
+        }
+
+        // ============================================
+        // DESCARGAR PDF
+        // ============================================
+
+        function descargarPDF() {
+            const element = document.getElementById('resultados-content');
+            const nombre = resultadosCalculados.nombre.replace(/\s+/g, '_');
+            
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `Diagnostico_Pensional_${nombre}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Agregar header temporal para el PDF
+            const headerHTML = `
+                <div id="pdf-header" style="text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #00D4AA;">
+                    <h1 style="font-size: 24px; color: #0A2540; margin-bottom: 8px;">📊 Diagnóstico Pensional</h1>
+                    <p style="color: #64748B;">Generado el ${new Date().toLocaleDateString('es-CO')} para ${resultadosCalculados.nombre}</p>
+                </div>
+            `;
+
+            element.insertAdjacentHTML('afterbegin', headerHTML);
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                document.getElementById('pdf-header').remove();
+            });
+        }
+    </script>
+</body>
+</html>
